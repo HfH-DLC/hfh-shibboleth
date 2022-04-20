@@ -7,7 +7,7 @@
  * Copyright:       © 2017, ETH Zurich, D-HEST, Stephan J. Müller, Lukas Kaiser
  * Text Domain:     hfh-shibboleth
  * Domain Path:     /languages
- * Version:         1.0.0
+ * Version:         1.0.1
  *
  * @package         HfH_Shibboleth
  */
