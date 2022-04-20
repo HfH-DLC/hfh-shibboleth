@@ -1,0 +1,36 @@
+name: Create Release
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      .github/**
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # Required due to the weg Git works, without it this action won't be able to find any or the correct tags
+    - name: Generate version string
+      id: versionstrings
+      run: echo "::set-output name=plugin_version::$(perl -n -e'/^ \* Version:\s*(\d.\d.\d)/ && print $1' hfh-shibboleth.php)"
+    - name: Check if version strings are set
+      if:  ${{ !steps.versionstrings.outputs.plugin_version}}
+      uses: actions/github-script@v3
+      with:
+        script: |
+          core.setFailed('Plugin version not set')
+    - uses: actions/create-release@latest
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.versionstrings.outputs.plugin_version}}
+        release_name: ${{ steps.versionstrings.outputs.plugin_version}}
+        draft: false
+        prerelease: false
