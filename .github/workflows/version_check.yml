@@ -1,0 +1,38 @@
+name: Version Check
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    
+jobs:
+  check_version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Required due to the weg Git works, without it this action won't be able to find any or the correct tags
+      - name: Generate version strings
+        id: versionstrings
+        run: echo "::set-output name=plugin_version::$(perl -n -e'/^ \* Version:\s*(\d.\d.\d)/ && print $1' hfh-shibboleth.php)"
+      - name: Check if version strings are set
+        if:  ${{ !steps.versionstrings.outputs.plugin_version}}
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('Plugin version not set')
+      - name: Get latest tag
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      - name: Get possible next versions
+        id: nexttags
+        uses: "WyriHaximus/github-action-next-semvers@v1"
+        with:
+          version: ${{ steps.previoustag.outputs.tag }}
+      - name: Validate versions
+        if:  ${{ steps.nexttags.outputs.major != steps.versionstrings.outputs.plugin_version && steps.nexttags.outputs.minor != steps.versionstrings.outputs.plugin_version && steps.nexttags.outputs.patch != steps.versionstrings.outputs.plugin_version }} 
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('Invalid version')
