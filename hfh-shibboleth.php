@@ -126,7 +126,7 @@ class Plugin
                 $grant = $zhaw;
             }
             if ($grant) {
-                //$user->add_role('subscriber');
+                $user->add_role('subscriber');
                 $role    = get_role('subscriber');
                 $allcaps = array_merge($allcaps, $role->capabilities);
             }
