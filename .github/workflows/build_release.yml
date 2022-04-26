@@ -1,0 +1,36 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      .github/**
+  workflow_dispatch:
+
+jobs:
+  build_release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - id: wp_version
+      env:
+        WP_VERSION_FILE: hfh-registration.php
+      run: echo "::set-output name=version::$(perl -n -e'/Version:\s*(\d.\d.\d)/ && print $1' $WP_VERSION_FILE)"
+    - name: Check wp_version
+      if:  ${{ !steps.wp_version.outputs.version}}
+      uses: actions/github-script@v3
+      with:
+        script: |
+          core.setFailed('wp_version not set')
+    - name: Build
+      run: |
+         zip -r ${{ github.event.repository.name }}.zip . -x ".git/*" ".github/*" ".gitignore"
+         
+    - name: Release
+      uses:  softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.wp_version.outputs.version}}
+        name: ${{ steps.wp_version.outputs.version}}
+        draft: false
+        prerelease: false
+        files: ./${{ github.event.repository.name }}.zip
