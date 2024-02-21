@@ -7,7 +7,7 @@
  * Copyright:       © 2017, ETH Zurich, D-HEST, Stephan J. Müller, Lukas Kaiser
  * Text Domain:     hfh-shibboleth
  * Domain Path:     /languages
- * Version:         1.0.1
+ * Version:         1.0.2
  *
  * @package         HfH_Shibboleth
  */
@@ -100,6 +100,20 @@ class Plugin
      */
     function grant_permissions($allcaps, $cap, $args, $user)
     {
+        if (!in_array('read', $cap)) {
+            return $allcaps;
+        }
+        $grant = false;
+
+        // If the user has the read capability for the page but is not a subscriber yet, grant them the subscriber role
+        if ($allcaps['read'] && !in_array('subscriber', $user->roles)) {
+            $grant = true;
+        }
+
+        /*
+         If the user does not have the read capability for the page,
+         check their organisations and grant the subscriber role according to the configured option
+        */
         if (empty($allcaps['read']) && in_array('read', $cap)) {
             $orgs = get_user_meta($user->ID, 'shibboleth_home_orgs', true);
             if (empty($orgs)) {
@@ -111,7 +125,6 @@ class Plugin
             $uzh   = in_array('uzh.ch', $orgs);
             $fhnw  = in_array('fhnw.ch', $orgs);
             $zhaw  = in_array('zhaw.ch', $orgs);
-            $grant = false;
             if ($mode == 1) {
                 $grant = $hfh;
             } elseif ($mode == 2) {
@@ -125,12 +138,14 @@ class Plugin
             } elseif ($mode == 6) {
                 $grant = $zhaw;
             }
-            if ($grant) {
-                $user->add_role('subscriber');
-                $role    = get_role('subscriber');
-                $allcaps = array_merge($allcaps, $role->capabilities);
-            }
         }
+
+        if ($grant) {
+            $user->add_role('subscriber');
+            $role    = get_role('subscriber');
+            $allcaps = array_merge($allcaps, $role->capabilities);
+        }
+
         return $allcaps;
     }
 
