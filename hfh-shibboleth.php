@@ -7,7 +7,7 @@
  * Copyright:       © 2017, ETH Zurich, D-HEST, Stephan J. Müller, Lukas Kaiser
  * Text Domain:     hfh-shibboleth
  * Domain Path:     /languages
- * Version:         1.0.2
+ * Version:         1.0.3
  *
  * @package         HfH_Shibboleth
  */
@@ -15,6 +15,7 @@
 namespace HfH\Shibboleth;
 
 use WP_Error;
+use WP_User;
 
 if (!defined('ABSPATH')) {
     return;
@@ -86,7 +87,7 @@ class Plugin
      */
     function set_home_orgs($user, $username, $password)
     {
-        if ($user && get_user_meta($user->ID, 'shibboleth_account', true) && isset($_SERVER['homeOrganization'])) {
+        if ($user instanceof WP_User && get_user_meta($user->ID, 'shibboleth_account', true) && isset($_SERVER['homeOrganization'])) {
             $orgs = explode(';', $_SERVER['homeOrganization']);
             update_user_meta($user->ID, 'shibboleth_home_orgs', $orgs);
         }
@@ -104,17 +105,16 @@ class Plugin
             return $allcaps;
         }
         $grant = false;
-
-        // If the user has the read capability for the page but is not a subscriber yet, grant them the subscriber role
-        if ($allcaps['read'] && !in_array('subscriber', $user->roles)) {
-            $grant = true;
-        }
-
-        /*
-         If the user does not have the read capability for the page,
-         check their organisations and grant the subscriber role according to the configured option
-        */
-        if (empty($allcaps['read']) && in_array('read', $cap)) {
+        // If the book is public and the user is not yet a subscriber, grant them the subscriber role
+        $book_is_public = (!empty(get_option('blog_public'))) ? 1 : 0;
+        if ($book_is_public) {
+            if (!in_array('subscriber', $user->roles)) {
+                $grant = true;
+            }
+        } else if (empty($allcaps['read']) && in_array('read', $cap)) {
+            /** If the user does not have the read capability,
+             * check their organisations and grant the subscriber role according to the configured option
+             */
             $orgs = get_user_meta($user->ID, 'shibboleth_home_orgs', true);
             if (empty($orgs)) {
                 $orgs = array();
