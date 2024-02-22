@@ -104,7 +104,6 @@ class Plugin
         if (!in_array('read', $cap)) {
             return $allcaps;
         }
-
         $grant = false;
         // If the book is public and the user is not yet a subscriber, grant them the subscriber role
         $book_is_public = (!empty(get_option('blog_public'))) ? 1 : 0;
