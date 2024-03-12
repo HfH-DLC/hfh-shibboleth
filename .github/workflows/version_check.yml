@@ -9,9 +9,6 @@ jobs:
   check_version:
     runs-on: ubuntu-latest
 
-    env:
-      USES_PACKAGE_JSON: false
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,24 +23,6 @@ jobs:
         with:
           script: |
             core.setFailed('wp_version not set')
-      - id: package_json_version
-        if: ${{ env.USES_PACKAGE_JSON }}
-        run: |
-          PACKAGE_JSON_VERSION=$(npm pkg get version | sed 's/"//g')
-          echo "Version: $PACKAGE_JSON_VERSION"
-          echo "version=$PACKAGE_JSON_VERSION" >> $GITHUB_OUTPUT
-      - name: Check if package_json_version is set
-        if: ${{ env.USES_PACKAGE_JSON && !steps.package_json_version.outputs.version }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.setFailed('package_version is not set')
-      - name: Check if versions are equal
-        if: ${{ env.USES_PACKAGE_JSON && steps.wp_version.outputs.version != steps.package_json_version.outputs.version }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.setFailed('wp_version and package_json_version must be the same')
       - name: Get latest tag
         id: previoustag
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
