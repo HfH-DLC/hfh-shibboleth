@@ -11,7 +11,7 @@ jobs:
   build_release:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - id: wp_version
       env:
         WP_VERSION_FILE: hfh-shibboleth.php
@@ -27,7 +27,7 @@ jobs:
          zip -r ${{ github.event.repository.name }}.zip . -x ".git/*" ".github/*" ".gitignore"
          
     - name: Release
-      uses:  softprops/action-gh-release@v1
+      uses:  softprops/action-gh-release@4634c16e79c963813287e889244c50009e7f0981
       with:
         tag_name: ${{ steps.wp_version.outputs.version}}
         name: ${{ steps.wp_version.outputs.version}}
